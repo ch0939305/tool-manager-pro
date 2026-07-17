@@ -165,7 +165,7 @@
 <script>
 // ===== Config =====
 const SUPABASE_URL = 'https://pavndetdbxytcegitvfx.supabase.co';
-const SUPABASE_KEY = 'eyJhbG…BAUQ';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhdm5kZXRkYnh5dGNlZ2l0dmZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Mjk4NDMsImV4cCI6MjA5OTUwNTg0M30.W0nRosd8aY8PU-RL1_IO0rrMLP4PgTFg36lUKgCBAUQ';
 
 // ===== State =====
 let currentTab = 'mold';
@@ -182,13 +182,13 @@ function setDbStatus(ok) {
 
 // ===== Supabase REST =====
 function supaHeaders() {
-  return { 'apikey': SUPABASE_KEY, 'Authorization': '***' + SUPABASE_KEY, 'Content-Type': 'application/json' };
+  return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
 }
 
 async function loadData() {
   try {
     const res = await fetch(SUPABASE_URL + '/rest/v1/tool_storage?select=*&order=id.asc', {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': '***' + SUPABASE_KEY }
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     DATA = await res.json();
@@ -206,7 +206,7 @@ async function loadData() {
 function getUploadHeaders() {
   return {
     'apikey': SUPABASE_KEY,
-    'Authorization': '***' + SUPABASE_KEY
+    'Authorization': 'Bearer ' + SUPABASE_KEY
   };
 }
 
