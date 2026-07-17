@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>模具·冲棒管理 Pro</title>
+<style>
+  :root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--text2:#666;--border:#e8ecf1;--accent:#0d2b5e;--accent2:#1a3d7a;--header:linear-gradient(135deg,#0d2b5e 0%,#1a3d7a 50%,#2a5a9e 100%);--shadow:rgba(0,0,0,0.08);--input-bg:#fafbfc;--tag-bg:#e8ecf1;--danger:#dc2626;--toggle-bg:#d0d5dd;--radius:12px}
+  .dark{--bg:#0f0f1a;--card:#1a1a30;--text:#e0e0e8;--text2:#8888a0;--border:#2a2a44;--accent:#4a7ed4;--accent2:#6c9ef0;--header:linear-gradient(135deg,#0a0a20 0%,#1a1a4e 50%,#2a2a6e 100%);--shadow:rgba(0,0,0,0.4);--input-bg:#222238;--tag-bg:#2a2a44;--toggle-bg:#3a3a5c}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px;transition:background .3s,color .3s}
+  .header{background:var(--header);border-radius:16px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.15)}
+  .header h1{color:#fff;font-size:22px;font-weight:800;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .header-actions{display:flex;gap:10px;align-items:center;flex-shrink:0}
+  .theme-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+  .theme-btn:hover{background:rgba(255,255,255,0.25)}
+  .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  .status-dot.green{background:#22c55e}
+  .status-dot.red{background:#ef4444}
+  .tabs{display:flex;gap:10px;margin-bottom:20px}
+  .tab{flex:1;padding:14px;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;background:var(--card);color:var(--text2);box-shadow:0 2px 8px var(--shadow);transition:all .2s;font-family:inherit;text-align:center}
+  .tab.active{background:var(--accent);color:#fff;box-shadow:0 4px 16px rgba(13,43,94,0.3)}
+  .tab .tab-icon{font-size:22px;display:block;margin-bottom:4px}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
+  .toolbar .count{font-size:13px;color:var(--text2)}
+  .btn-add{padding:10px 20px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .2s;white-space:nowrap}
+  .btn-add:hover{background:var(--accent2)}
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 2px 8px var(--shadow);border-left:4px solid var(--accent)}
+  .item-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
+  .item-desc{font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item-meta{font-size:11px;color:var(--text2);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap}
+  .item-meta span{background:var(--tag-bg);padding:2px 8px;border-radius:6px}
+  .item-files{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .item-files .file-thumb{width:60px;height:60px;border-radius:8px;object-fit:cover;cursor:pointer;border:1px solid var(--border);transition:transform .15s}
+  .item-files .file-thumb:hover{transform:scale(1.05)}
+  .item-files .file-link{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:var(--tag-bg);font-size:11px;color:var(--accent);text-decoration:none;font-weight:600}
+  .item-files .file-link:hover{background:var(--accent);color:#fff}
+  .item-actions{display:flex;gap:6px;margin-top:10px}
+  .item-actions button{padding:6px 14px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+  .btn-edit{background:var(--tag-bg);color:var(--text)}
+  .btn-edit:hover{background:var(--accent);color:#fff}
+  .btn-del{background:#fee2e2;color:var(--danger)}
+  .btn-del:hover{background:var(--danger);color:#fff}
+  .empty{text-align:center;padding:60px 20px;color:var(--text2);font-size:14px}
+  .empty .empty-icon{font-size:48px;margin-bottom:12px}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;justify-content:center;align-items:center;padding:20px}
+  .modal-overlay.show{display:flex}
+  .modal{background:var(--card);border-radius:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+  .modal h2{font-size:18px;font-weight:700;color:var(--text);margin-bottom:20px}
+  .modal label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:4px;margin-top:14px}
+  .modal label:first-of-type{margin-top:0}
+  .modal input,.modal textarea,.modal select{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--input-bg);color:var(--text);outline:none;transition:border-color .2s}
+  .modal input:focus,.modal textarea:focus,.modal select:focus{border-color:var(--accent)}
+  .modal textarea{resize:vertical;min-height:60px}
+  .upload-area{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;margin-top:14px;background:var(--input-bg)}
+  .upload-area:hover{border-color:var(--accent);background:var(--tag-bg)}
+  .upload-area .icon{font-size:28px;margin-bottom:4px}
+  .upload-area .hint{font-size:12px;color:var(--text2)}
+  .upload-area.has-file{border-color:var(--accent);border-style:solid;background:rgba(13,43,94,0.05)}
+  .upload-area .preview{max-height:100px;max-width:100%;border-radius:8px;margin-top:6px}
+  .upload-area .file-name{font-size:12px;color:var(--accent);font-weight:600;margin-top:4px}
+  .upload-area .remove-btn{background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:4px 0}
+  .modal-btns{display:flex;gap:10px;margin-top:24px;justify-content:flex-end}
+  .modal-btns button{padding:10px 24px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+  .btn-cancel{background:var(--tag-bg);color:var(--text2)}
+  .btn-cancel:hover{background:var(--border)}
+  .btn-save{background:var(--accent);color:#fff}
+  .btn-save:hover{background:var(--accent2)}
+  .btn-del-modal{background:var(--danger);color:#fff}
+  .btn-del-modal:hover{background:#b91c1c}
+  .search-box{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--input-bg);color:var(--text);outline:none;margin-bottom:14px;transition:border-color .2s}
+  .search-box:focus{border-color:var(--accent)}
+  .search-box::placeholder{color:var(--text2)}
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+  .toast.show{opacity:1}
+
+  /* Gallery viewer */
+  .gallery-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;justify-content:center;align-items:center;padding:20px;cursor:pointer}
+  .gallery-overlay.show{display:flex}
+  .gallery-overlay img{max-width:100%;max-height:90vh;border-radius:8px;object-fit:contain}
+</style>
+</head>
+<body>
+
+<div class="gallery-overlay" id="galleryOverlay" onclick="this.classList.remove('show')">
+  <img id="galleryImg" src="" alt="">
+</div>
+
+<div class="header">
+  <h1>🔧 模具·冲棒管理 Pro</h1>
+  <div class="header-actions">
+    <span class="status-dot" id="dbStatus" title="連線狀態"></span>
+    <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="mold" onclick="switchTab('mold')"><span class="tab-icon">🔩</span>模具管理</button>
+  <button class="tab" data-tab="punch" onclick="switchTab('punch')"><span class="tab-icon">🔧</span>沖棒管理</button>
+</div>
+
+<div class="toolbar">
+  <div class="count" id="itemCount">Loading...</div>
+  <button class="btn-add" onclick="openAdd()">＋ 新增</button>
+</div>
+
+<input class="search-box" id="searchInput" placeholder="🔍 搜尋名稱、規格、備註..." oninput="renderList()">
+
+<div class="list" id="itemList">
+  <div class="empty"><div class="empty-icon">⏳</div><div>連線中...</div></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">新增記錄</h2>
+    <form onsubmit="return false;">
+      <label>名稱 *</label>
+      <input type="text" id="modName" maxlength="30" placeholder="例如：模具A-001">
+
+      <label>規格 / 型號</label>
+      <input type="text" id="modSpec" maxlength="40" placeholder="例如：DC53 / 25×80mm">
+
+      <label>備註</label>
+      <textarea id="modNote" rows="3" placeholder="備註資訊..."></textarea>
+
+      <label>狀態</label>
+      <select id="modStatus">
+        <option value="使用中">✅ 使用中</option>
+        <option value="庫存">📦 庫存</option>
+        <option value="保養中">🔧 保養中</option>
+        <option value="報廢">🗑 報廢</option>
+      </select>
+
+      <label>照片（可選）</label>
+      <div class="upload-area" id="imageUploadArea" onclick="document.getElementById('imageInput').click()">
+        <div class="icon" id="imgIcon">📷</div>
+        <div class="hint" id="imgHint">點擊上傳照片</div>
+        <img class="preview" id="imgPreview" style="display:none">
+        <div class="file-name" id="imgName"></div>
+        <button type="button" class="remove-btn" id="imgRemove" style="display:none" onclick="event.stopPropagation();removeImage()">✕ 移除</button>
+      </div>
+      <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="onImageSelect(event)">
+
+      <label>PDF（可選）</label>
+      <div class="upload-area" id="pdfUploadArea" onclick="document.getElementById('pdfInput').click()">
+        <div class="icon" id="pdfIcon">📄</div>
+        <div class="hint" id="pdfHint">點擊上傳 PDF</div>
+        <div class="file-name" id="pdfName"></div>
+        <button type="button" class="remove-btn" id="pdfRemove" style="display:none" onclick="event.stopPropagation();removePdf()">✕ 移除</button>
+      </div>
+      <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="onPdfSelect(event)">
+
+      <div class="modal-btns">
+        <button type="button" class="btn-cancel" onclick="closeModal()">取消</button>
+        <button type="button" class="btn-del-modal" id="delBtn" onclick="deleteItem()" style="display:none">刪除</button>
+        <button type="button" class="btn-save" onclick="saveItem()">儲存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== Config =====
+const SUPABASE_URL = 'https://pavndetdbxytcegitvfx.supabase.co';
+const SUPABASE_KEY = 'eyJhbG…BAUQ';
+
+// ===== State =====
+let currentTab = 'mold';
+let editingId = null;
+let DATA = [];
+// Pending file uploads
+let pendingImage = null;   // {file, localUrl}
+let pendingPdf = null;     // {file, name}
+
+// ===== DB Status =====
+function setDbStatus(ok) {
+  document.getElementById('dbStatus').className = 'status-dot ' + (ok ? 'green' : 'red');
+}
+
+// ===== Supabase REST =====
+function supaHeaders() {
+  return { 'apikey': SUPABASE_KEY, 'Authorization': '***' + SUPABASE_KEY, 'Content-Type': 'application/json' };
+}
+
+async function loadData() {
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/tool_storage?select=*&order=id.asc', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': '***' + SUPABASE_KEY }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    DATA = await res.json();
+    setDbStatus(true);
+  } catch(e) {
+    console.error(e);
+    setDbStatus(false);
+    showToast('資料庫連線失敗');
+    DATA = [];
+  }
+  renderList();
+}
+
+// ===== File Upload =====
+function getUploadHeaders() {
+  return {
+    'apikey': SUPABASE_KEY,
+    'Authorization': '***' + SUPABASE_KEY
+  };
+}
+
+function uploadFile(file, folder) {
+  const ext = file.name.split('.').pop();
+  const path = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+  const url = SUPABASE_URL + '/storage/v1/object/tool_files/' + path;
+  return fetch(url, {
+    method: 'PUT',
+    headers: getUploadHeaders(),
+    body: file
+  }).then(r => {
+    if (!r.ok) throw new Error('Upload ' + r.status);
+    return SUPABASE_URL + '/storage/v1/object/public/tool_files/' + path;
+  });
+}
+
+function deleteFile(url) {
+  if (!url) return Promise.resolve();
+  // Extract path from public URL
+  const prefix = SUPABASE_URL + '/storage/v1/object/public/tool_files/';
+  if (!url.startsWith(prefix)) return Promise.resolve();
+  const path = url.slice(prefix.length);
+  return fetch(SUPABASE_URL + '/storage/v1/object/tool_files/' + path, {
+    method: 'DELETE',
+    headers: getUploadHeaders()
+  }).catch(() => {});
+}
+
+// ===== File Input Handlers =====
+function onImageSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('照片不能超過 5MB'); return; }
+  pendingImage = { file, localUrl: URL.createObjectURL(file) };
+  document.getElementById('imgIcon').textContent = '✅';
+  document.getElementById('imgHint').textContent = file.name;
+  document.getElementById('imgName').textContent = '';
+  const prev = document.getElementById('imgPreview');
+  prev.src = pendingImage.localUrl;
+  prev.style.display = 'block';
+  document.getElementById('imgRemove').style.display = 'block';
+  document.getElementById('imageUploadArea').classList.add('has-file');
+}
+
+function removeImage() {
+  if (pendingImage && pendingImage.localUrl) URL.revokeObjectURL(pendingImage.localUrl);
+  pendingImage = null;
+  document.getElementById('imageInput').value = '';
+  document.getElementById('imgIcon').textContent = '📷';
+  document.getElementById('imgHint').textContent = '點擊上傳照片';
+  document.getElementById('imgPreview').style.display = 'none';
+  document.getElementById('imgName').textContent = '';
+  document.getElementById('imgRemove').style.display = 'none';
+  document.getElementById('imageUploadArea').classList.remove('has-file');
+}
+
+function onPdfSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { alert('PDF 不能超過 10MB'); return; }
+  pendingPdf = { file, name: file.name };
+  document.getElementById('pdfIcon').textContent = '✅';
+  document.getElementById('pdfHint').textContent = file.name;
+  document.getElementById('pdfName').textContent = '';
+  document.getElementById('pdfRemove').style.display = 'block';
+  document.getElementById('pdfUploadArea').classList.add('has-file');
+}
+
+function removePdf() {
+  pendingPdf = null;
+  document.getElementById('pdfInput').value = '';
+  document.getElementById('pdfIcon').textContent = '📄';
+  document.getElementById('pdfHint').textContent = '點擊上傳 PDF';
+  document.getElementById('pdfName').textContent = '';
+  document.getElementById('pdfRemove').style.display = 'none';
+  document.getElementById('pdfUploadArea').classList.remove('has-file');
+}
+
+// ===== Theme =====
+function toggleTheme() {
+  document.documentElement.classList.toggle('dark');
+  localStorage.setItem('tmpro_dark', document.documentElement.classList.contains('dark'));
+}
+if (localStorage.getItem('tmpro_dark') === 'true') {
+  document.documentElement.classList.add('dark');
+}
+
+// ===== Tab =====
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  renderList();
+}
+
+// ===== Render =====
+function renderList() {
+  const items = DATA.filter(i => i.tab === currentTab);
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filtered = q ? items.filter(i =>
+    (i.name||'').toLowerCase().includes(q) ||
+    (i.spec||'').toLowerCase().includes(q) ||
+    (i.note||'').toLowerCase().includes(q)
+  ) : items;
+
+  document.getElementById('itemCount').textContent = filtered.length + ' 項';
+  const container = document.getElementById('itemList');
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">${q ? '🔍' : '📂'}</div><div>${q ? '無相符資料' : '尚無資料，點擊「＋ 新增」開始記錄'}</div></div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(item => {
+    const n = esc(item.name||'');
+    const s = item.spec ? esc(item.spec) : '';
+    const nt = item.note ? ' · ' + esc(item.note) : '';
+    const st = esc(item.status||'使用中');
+    const dt = item.created ? item.created.slice(0,10) : '';
+    const img = item.image_url || '';
+    const pdf = item.pdf_url || '';
+    return `<div class="item">
+      <div class="item-title">${n}</div>
+      <div class="item-desc">${s}${nt}</div>
+      <div class="item-meta"><span>${st}</span>${dt ? '<span>📅 ' + dt + '</span>' : ''}</div>
+      ${(img || pdf) ? '<div class="item-files">' : ''}
+      ${img ? '<img class="file-thumb" src="' + esc(img) + '" onclick="viewImage(\'' + esc(img) + '\')">' : ''}
+      ${pdf ? '<a class="file-link" href="' + esc(pdf) + '" target="_blank">📄 PDF</a>' : ''}
+      ${(img || pdf) ? '</div>' : ''}
+      <div class="item-actions">
+        <button class="btn-edit" onclick="openEdit(${item.id})">✏️ 編輯</button>
+        <button class="btn-del" onclick="confirmDel(${item.id})">🗑 刪除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function viewImage(url) {
+  document.getElementById('galleryImg').src = url;
+  document.getElementById('galleryOverlay').classList.add('show');
+}
+
+// ===== Modal =====
+function openAdd() {
+  editingId = null;
+  resetModal();
+  document.getElementById('modalTitle').textContent = '新增' + (currentTab === 'mold' ? '模具' : '沖棒');
+  document.getElementById('delBtn').style.display = 'none';
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function openEdit(id) {
+  const item = DATA.find(i => i.id === id);
+  if (!item) return;
+  editingId = id;
+  resetModal();
+  document.getElementById('modalTitle').textContent = '編輯記錄';
+  document.getElementById('modName').value = item.name || '';
+  document.getElementById('modSpec').value = item.spec || '';
+  document.getElementById('modNote').value = item.note || '';
+  document.getElementById('modStatus').value = item.status || '使用中';
+  document.getElementById('delBtn').style.display = 'inline-block';
+
+  // Show existing files
+  if (item.image_url) {
+    document.getElementById('imgIcon').textContent = '✅';
+    document.getElementById('imgHint').textContent = '有照片';
+    document.getElementById('imgPreview').src = item.image_url;
+    document.getElementById('imgPreview').style.display = 'block';
+    document.getElementById('imgRemove').style.display = 'block';
+    document.getElementById('imageUploadArea').classList.add('has-file');
+    pendingImage = { existingUrl: item.image_url };
+  }
+  if (item.pdf_url) {
+    document.getElementById('pdfIcon').textContent = '✅';
+    document.getElementById('pdfHint').textContent = '有 PDF';
+    document.getElementById('pdfRemove').style.display = 'block';
+    document.getElementById('pdfUploadArea').classList.add('has-file');
+    pendingPdf = { existingUrl: item.pdf_url, name: 'PDF 檔案' };
+  }
+
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function resetModal() {
+  document.getElementById('modName').value = '';
+  document.getElementById('modSpec').value = '';
+  document.getElementById('modNote').value = '';
+  document.getElementById('modStatus').value = '使用中';
+  document.getElementById('imageInput').value = '';
+  document.getElementById('pdfInput').value = '';
+  pendingImage = null;
+  pendingPdf = null;
+  document.getElementById('imgIcon').textContent = '📷';
+  document.getElementById('imgHint').textContent = '點擊上傳照片';
+  document.getElementById('imgPreview').style.display = 'none';
+  document.getElementById('imgName').textContent = '';
+  document.getElementById('imgRemove').style.display = 'none';
+  document.getElementById('imageUploadArea').classList.remove('has-file');
+  document.getElementById('pdfIcon').textContent = '📄';
+  document.getElementById('pdfHint').textContent = '點擊上傳 PDF';
+  document.getElementById('pdfName').textContent = '';
+  document.getElementById('pdfRemove').style.display = 'none';
+  document.getElementById('pdfUploadArea').classList.remove('has-file');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  editingId = null;
+  resetModal();
+}
+
+async function saveItem() {
+  const name = document.getElementById('modName').value.trim();
+  if (!name) { alert('請輸入名稱'); return; }
+
+  const saveBtn = document.querySelector('.btn-save');
+  saveBtn.disabled = true;
+  saveBtn.textContent = '儲存中...';
+
+  try {
+    let image_url = '';
+    let pdf_url = '';
+
+    // Upload image if new
+    if (pendingImage && pendingImage.file) {
+      image_url = await uploadFile(pendingImage.file, 'images');
+    } else if (pendingImage && pendingImage.existingUrl) {
+      image_url = pendingImage.existingUrl;
+    }
+
+    // Upload pdf if new
+    if (pendingPdf && pendingPdf.file) {
+      pdf_url = await uploadFile(pendingPdf.file, 'pdfs');
+    } else if (pendingPdf && pendingPdf.existingUrl) {
+      pdf_url = pendingPdf.existingUrl;
+    }
+
+    const spec = document.getElementById('modSpec').value.trim();
+    const note = document.getElementById('modNote').value.trim();
+    const status = document.getElementById('modStatus').value;
+
+    if (editingId) {
+      const oldItem = DATA.find(i => i.id === editingId);
+      // Delete old files if replaced
+      if (oldItem) {
+        if (oldItem.image_url && image_url !== oldItem.image_url) await deleteFile(oldItem.image_url);
+        if (oldItem.pdf_url && pdf_url !== oldItem.pdf_url) await deleteFile(oldItem.pdf_url);
+      }
+
+      const res = await fetch(SUPABASE_URL + '/rest/v1/tool_storage?id=eq.' + editingId, {
+        method: 'PATCH',
+        headers: { ...supaHeaders(), 'Prefer': 'return=representation' },
+        body: JSON.stringify({ name, spec, note, status, image_url, pdf_url })
+      });
+      if (!res.ok) throw new Error('PATCH ' + res.status);
+      showToast('✅ 已更新');
+    } else {
+      const res = await fetch(SUPABASE_URL + '/rest/v1/tool_storage', {
+        method: 'POST',
+        headers: supaHeaders(),
+        body: JSON.stringify({ tab: currentTab, name, spec, note, status, image_url, pdf_url })
+      });
+      if (!res.ok) throw new Error('POST ' + res.status);
+      showToast('✅ 已儲存');
+    }
+
+    closeModal();
+    await loadData();
+  } catch(e) {
+    console.error(e);
+    showToast('❌ 儲存失敗');
+  }
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = '儲存';
+}
+
+function confirmDel(id) {
+  if (!confirm('確定刪除此記錄？')) return;
+  const item = DATA.find(i => i.id === id);
+  if (item) {
+    if (item.image_url) deleteFile(item.image_url);
+    if (item.pdf_url) deleteFile(item.pdf_url);
+  }
+  fetch(SUPABASE_URL + '/rest/v1/tool_storage?id=eq.' + id, {
+    method: 'DELETE',
+    headers: getUploadHeaders()
+  }).then(r => {
+    if (!r.ok) throw new Error('DELETE ' + r.status);
+    showToast('🗑 已刪除');
+    loadData();
+  }).catch(e => {
+    console.error(e);
+    showToast('❌ 刪除失敗');
+  });
+}
+
+function deleteItem() {
+  if (editingId) confirmDel(editingId);
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ===== Init =====
+loadData();
+</script>
+</body>
+</html>
