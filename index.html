@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>模具·冲棒管理 Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--text2:#666;--border:#e8ecf1;--accent:#0d2b5e;--accent2:#1a3d7a;--header:linear-gradient(135deg,#0d2b5e 0%,#1a3d7a 50%,#2a5a9e 100%);--shadow:rgba(0,0,0,0.08);--input-bg:#fafbfc;--tag-bg:#e8ecf1;--danger:#dc2626;--toggle-bg:#d0d5dd;--radius:12px}
   .dark{--bg:#0f0f1a;--card:#1a1a30;--text:#e0e0e8;--text2:#8888a0;--border:#2a2a44;--accent:#4a7ed4;--accent2:#6c9ef0;--header:linear-gradient(135deg,#0a0a20 0%,#1a1a4e 50%,#2a2a6e 100%);--shadow:rgba(0,0,0,0.4);--input-bg:#222238;--tag-bg:#2a2a44;--toggle-bg:#3a3a5c}
@@ -138,6 +139,9 @@
         <div class="hint" id="imgHint">點擊上傳照片</div>
         <img class="preview" id="imgPreview" style="display:none">
         <div class="file-name" id="imgName"></div>
+        <label style="display:none;font-size:12px;margin-top:6px;cursor:pointer" id="convertLabel">
+          <input type="checkbox" id="convertToPdf" checked> 轉為 PDF 再上傳（省空間）
+        </label>
         <button type="button" class="remove-btn" id="imgRemove" style="display:none" onclick="event.stopPropagation();removeImage()">✕ 移除</button>
       </div>
       <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="onImageSelect(event)">
@@ -249,6 +253,7 @@ function onImageSelect(e) {
   prev.src = pendingImage.localUrl;
   prev.style.display = 'block';
   document.getElementById('imgRemove').style.display = 'block';
+  document.getElementById('convertLabel').style.display = 'block';
   document.getElementById('imageUploadArea').classList.add('has-file');
 }
 
@@ -261,7 +266,41 @@ function removeImage() {
   document.getElementById('imgPreview').style.display = 'none';
   document.getElementById('imgName').textContent = '';
   document.getElementById('imgRemove').style.display = 'none';
+  document.getElementById('convertLabel').style.display = 'none';
   document.getElementById('imageUploadArea').classList.remove('has-file');
+}
+
+// ===== Convert Image to PDF =====
+function imgToPdf(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      const pw = 297, ph = 210; // A4 landscape
+      let iw = img.width, ih = img.height;
+      let scale = Math.min(pw / iw, ph / ih);
+      let w = iw * scale, h = ih * scale;
+      const x = (pw - w) / 2, y = (ph - h) / 2;
+      pdf.addImage(img, 'JPEG', x, y, w, h);
+      const blob = pdf.output('blob');
+      const name = file.name.replace(/\.[^.]+$/, '') + '.pdf';
+      resolve(new File([blob], name, { type: 'application/pdf' }));
+    };
+    img.onerror = () => reject('Image load error');
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// ===== Upload wrapper (auto convert if checked) =====
+async function uploadImageWithOption(file) {
+  const convert = document.getElementById('convertToPdf').checked;
+  if (convert) {
+    const pdfFile = await imgToPdf(file);
+    return uploadFile(pdfFile, 'pdfs');
+  } else {
+    return uploadFile(file, 'images');
+  }
 }
 
 function onPdfSelect(e) {
@@ -333,7 +372,7 @@ function renderList() {
       <div class="item-desc">${s}${nt}</div>
       <div class="item-meta"><span>${st}</span>${dt ? '<span>📅 ' + dt + '</span>' : ''}</div>
       ${(img || pdf) ? '<div class="item-files">' : ''}
-      ${img ? '<img class="file-thumb" src="' + esc(img) + '" onclick="viewImage(\'' + esc(img) + '\')">' : ''}
+      ${img && img.endsWith('.pdf') ? '<a class="file-link" href="' + esc(img) + '" target="_blank">📷📄 照片PDF</a>' : img ? '<img class="file-thumb" src="' + esc(img) + '" onclick="viewImage(\'' + esc(img) + '\')" title="點擊放大">' : ''}
       ${pdf ? '<a class="file-link" href="' + esc(pdf) + '" target="_blank">📄 PDF</a>' : ''}
       ${(img || pdf) ? '</div>' : ''}
       <div class="item-actions">
@@ -435,7 +474,7 @@ async function saveItem() {
 
     // Upload image if new
     if (pendingImage && pendingImage.file) {
-      image_url = await uploadFile(pendingImage.file, 'images');
+      image_url = await uploadImageWithOption(pendingImage.file);
     } else if (pendingImage && pendingImage.existingUrl) {
       image_url = pendingImage.existingUrl;
     }
