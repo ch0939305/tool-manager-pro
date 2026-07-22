@@ -343,7 +343,7 @@ function switchTab(tab) {
 
 // ===== Render =====
 function renderList() {
-  const items = DATA.filter(i => i.tab === currentTab);
+  const items = DATA.filter(i => (i.data||{}).tab === currentTab);
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
   const filtered = q ? items.filter(i =>
     (i.name||'').toLowerCase().includes(q) ||
