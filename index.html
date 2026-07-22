@@ -501,7 +501,7 @@ async function saveItem() {
       const res = await fetch(SUPABASE_URL + '/rest/v1/tool_storage?id=eq.' + editingId, {
         method: 'PATCH',
         headers: { ...supaHeaders(), 'Prefer': 'return=representation' },
-        body: JSON.stringify({ name, spec, note, status, image_url, pdf_url })
+        body: JSON.stringify({ data: { name, spec, note, status, image_url, pdf_url } })
       });
       if (!res.ok) throw new Error('PATCH ' + res.status);
       showToast('✅ 已更新');
@@ -509,7 +509,7 @@ async function saveItem() {
       const res = await fetch(SUPABASE_URL + '/rest/v1/tool_storage', {
         method: 'POST',
         headers: supaHeaders(),
-        body: JSON.stringify({ tab: currentTab, name, spec, note, status, image_url, pdf_url })
+        body: JSON.stringify({ data: { tab: currentTab, name, spec, note, status, image_url, pdf_url } })
       });
       if (!res.ok) throw new Error('POST ' + res.status);
       showToast('✅ 已儲存');
